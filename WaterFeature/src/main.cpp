@@ -13,8 +13,9 @@
   unsigned long time_last_drip;
   #define DRIP_QTY_MIN                       1               // [drips]
   #define DRIP_QTY_MAX                      20               // [drips]
-  #define DRIP_PERIOD_MIN   DRIP_QTY_MAX * 722               // [millis] or ~722ms per drop
-  #define DRIP_PERIOD_MAX               900000               // [millis]
+  #define DRIP_PERIOD_MIN               300000               // [millis] or ~722ms per drop
+  #define DRIP_PERIOD_MAX              1800000               // [millis]
+  #define DRIP_DELAY_MAX                  2000               // [millis]
   #define STEPS_PER_DRIP                   590               // This is a guess for now
         // steps_turn = (4 * steps_rot * Vd) / (pi^2 * ID_tube^2 * OD_pump)
         // Where:
@@ -38,7 +39,6 @@ void setup() {
   Serial.print("Pushing "); Serial.print(drip_qty); Serial.println(" drops");
   pump_stepper.newMove(pump_stepper_dir, drip_qty * STEPS_PER_DRIP);
   time_last_drip = millis();
-  
 }
 
 void loop() {
@@ -56,9 +56,17 @@ void loop() {
       time_next_drip = random(DRIP_PERIOD_MIN, DRIP_PERIOD_MAX);
       drip_qty       = random(   DRIP_QTY_MIN,    DRIP_QTY_MAX);
       Serial.print("Next drop sequence: (time_next_drip, drip_qty): "); Serial.print(time_next_drip); Serial.print(", "); Serial.println(drip_qty);
-      pump_stepper.newMove(pump_stepper_dir, drip_qty * STEPS_PER_DRIP);
+      while (drip_qty > 0) {
+        int loop_drip_steps = pump_stepper.getStepsLeft();
+        if ( loop_drip_steps == 0) {
+          Serial.print("drip ");
+          pump_stepper.newMove(pump_stepper_dir, STEPS_PER_DRIP);
+          drip_qty = drip_qty - 1;
+          delay(random(DRIP_DELAY_MAX));
+        }
+      }
       time_last_drip = millis();
+      Serial.println();
     }
   }
-
 }
