@@ -4,35 +4,38 @@
 
 // Variables needed by CheapStepper
   CheapStepper pump_stepper(8,9,10,11);
-  bool pump_stepper_dir = true;
-  //unsigned long pump_stepper_moveStartTime = 0;
+  bool pump_stepper_dir   =    true;
+  #define STEPS_ROT            4076
+
+// Variables for timing
+  int drip_qty            =      2;              // [drips]
+  unsigned long time_next_drip = 0;              // number of millis until next drip
+  unsigned long time_last_drip;
+  #define DRIP_QTY_MIN           1               // [drips]
+  #define DRIP_QTY_MAX          20               // [drips]
+  #define DRIP_PERIOD_MIN     5000               // [millis]
+  #define DRIP_PERIOD_MAX    30000               // [millis]
+  #define STEPS_PER_DRIP       590               // This is a guess for now
+        // steps_turn = (4 * steps_rot * Vd) / (pi^2 * ID_tube^2 * OD_pump)
+        // Where:
+        //  ID_tube   =  2 [mm]
+        //  OD_pump   = 35 [mm]
+        //  Vd (drop) = 50 [mm^3]
+        //
+        // Gives:
+        //  steps_turn = 590 (rounded up)
 
 
 
 void setup() {
+  pump_stepper.setTotalSteps(STEPS_ROT);
   pump_stepper.setRpm(12);
 
   Serial.begin(9600);
 
-  Serial.print("stepper RPM: "); Serial.print(pump_stepper.getRpm());
-  Serial.println();
-
-  // and let's print the delay time (in microseconds) between each step
-  // the delay is based on the RPM setting:
-  // it's how long the stepper will wait before each step
-
-  Serial.print("stepper delay (micros): "); Serial.print(pump_stepper.getDelay());
-  Serial.println(); Serial.println();
-
-  // now let's set up our first move...
-  // let's move a half rotation from the start point
-
-  pump_stepper.newMoveTo(pump_stepper_dir, 2048);
-  /* this is the same as: 
-   * stepper.newMoveToDegree(clockwise, 180);
-   * because there are 4096 (default) steps in a full rotation
-   */
-  //pump_stepper_moveStartTime = millis(); // let's save the time at which we started this move
+  // Lets do a drip or 5 to start:
+  pump_stepper.newMove(pump_stepper_dir, drip_qty * STEPS_PER_DRIP);
+  time_last_drip = millis();
   
 }
 
@@ -42,30 +45,14 @@ void loop() {
   // if we are using non-blocking moves
   pump_stepper.run();
 
-  // let's check how many steps are left in the current move:
-  
+  // when there are no more steps, and the wait time has elapsed,
   int stepsLeft = pump_stepper.getStepsLeft();
-
-  // if the current move is done...
-  
-  if (stepsLeft == 0){
-
-    // let's print the position of the stepper to serial
-    
-    Serial.print("stepper position: "); Serial.print(pump_stepper.getStep());
-    Serial.println();
-
-    // and now let's print the time the move took
-
-    //unsigned long timeTook = millis() - pump_stepper_moveStartTime; // calculate time elapsed since move start
-    //Serial.print("move took (ms): "); Serial.print(timeTook);
-    //Serial.println(); Serial.println();
-    
-    // let's start a new move in the reverse direction
-    
-    pump_stepper_dir = !pump_stepper_dir; // reverse direction
-    pump_stepper.newMoveDegrees (pump_stepper_dir, 180); // move 180 degrees from current position
-    //pump_stepper_moveStartTime = millis(); // reset move start time
+  bool check_steps = stepsLeft == 0;
+  bool check_time = millis() - time_last_drip >= time_next_drip;
+  if ( check_steps && check_time ) {
+    time_next_drip = random(DRIP_PERIOD_MIN, DRIP_PERIOD_MAX);
+    drip_qty       = random(   DRIP_QTY_MIN,    DRIP_QTY_MAX);
+    Serial.print("Next drop sequence: (time_next_drip, drip_qty): "); Serial.print(time_next_drip); Serial.print(", "); Serial.println(drip_qty);
   }
 
 }
