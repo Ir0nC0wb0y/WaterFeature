@@ -8,13 +8,13 @@
   #define STEPS_ROT                       4076
 
 // Variables for timing
-  int drip_qty                 =             2;              // [drips]
+  int drip_qty                 =             5;              // [drips]
   unsigned long time_next_drip =             0;              // number of millis until next drip
   unsigned long time_last_drip;
   #define DRIP_QTY_MIN                       1               // [drips]
   #define DRIP_QTY_MAX                      20               // [drips]
   #define DRIP_PERIOD_MIN   DRIP_QTY_MAX * 722               // [millis] or ~722ms per drop
-  #define DRIP_PERIOD_MAX                90000               // [millis]
+  #define DRIP_PERIOD_MAX               900000               // [millis]
   #define STEPS_PER_DRIP                   590               // This is a guess for now
         // steps_turn = (4 * steps_rot * Vd) / (pi^2 * ID_tube^2 * OD_pump)
         // Where:
@@ -35,7 +35,7 @@ void setup() {
   Serial.begin(9600);
 
   // Lets do a drip or 5 to start:
-  Serial.println("Pushing 5 drops");
+  Serial.print("Pushing "); Serial.print(drip_qty); Serial.println(" drops");
   pump_stepper.newMove(pump_stepper_dir, drip_qty * STEPS_PER_DRIP);
   time_last_drip = millis();
   
