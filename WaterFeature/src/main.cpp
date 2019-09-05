@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <CheapStepper.h>
+#include <CheapStepper.h>                                   // https://github.com/tyhenry/CheapStepper
 
 
 // Variables needed by CheapStepper
@@ -31,7 +31,7 @@
 
 void setup() {
   pump_stepper.setTotalSteps(STEPS_ROT);
-  pump_stepper.setRpm(12);
+  pump_stepper.setRpm(18);
 
   Serial.begin(9600);
 
