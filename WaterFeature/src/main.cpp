@@ -1,5 +1,4 @@
 #include <Arduino.h>
-//#include <StepperDriver.h>
 
 
 // Variables needed by StepperDriver
