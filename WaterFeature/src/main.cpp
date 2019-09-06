@@ -15,7 +15,7 @@
   #define RPM                                24
       // time for drip at this speed: .36 sec
   
-  #include "DRV8825.h"
+  #include <DRV8825.h>
   #define MODE0                              10
   #define MODE1                              11
   #define MODE2                              12
