@@ -8,12 +8,9 @@
   #define DIR                                 8
   #define STEP                                9
   #define SLEEP                               5 // optional (just delete SLEEP from everywhere if not used)
-  //#define MOTOR_ACCEL                      2000
-  //#define MOTOR_DECEL                      1000
   #define STEPS_ROT    MICROSTEPS * MOTOR_STEPS
-  #define RPM                                24
-      // time for drip at this speed: .36 sec
-  
+  #define RPM                                60 // pretty fast, but not motor's top speed
+
   #include <DRV8825.h>
   #define MODE0                              10
   #define MODE1                              11
@@ -72,13 +69,12 @@ void setup() {
 
   // Lets do a drip or 5 to start:
   Serial.print("Pushing "); Serial.print(drip_qty); Serial.println(" drops");
-  digitalWrite(SLEEP, HIGH);
   while ( drip_qty > 0) {
     do_drip();
     Serial.print("drip ");
     drip_qty--;
     if ( drip_qty > 0 ) {
-      delay(500);
+      delay(250);
     }
   }
   Serial.println();
@@ -93,7 +89,6 @@ void loop() {
   bool check_time = millis() - time_last_drip >= time_next_drip;
   if ( check_time ) {
     drip_qty = random(DRIP_QTY_MIN, DRIP_QTY_MAX);
-    digitalWrite(SLEEP,HIGH);
     while (drip_qty > 0) {
         Serial.print("drip ");
         do_drip();
