@@ -53,6 +53,7 @@ int steps_per_drip() {
 void do_drip() {
   digitalWrite(SLEEP,HIGH); // turn on motor
   stepper.move(drip_steps); // move motor by 1 drip
+  delay(10);
   digitalWrite(SLEEP,LOW);  // turn off motor
 }
 
@@ -67,6 +68,7 @@ void setup() {
 
   // calculate the number of steps per drip (used throughout)
   drip_steps = steps_per_drip();
+  randomSeed(analogRead(0));
 
   // Lets do a drip or 5 to start:
   Serial.print("Pushing "); Serial.print(drip_qty); Serial.println(" drops");
@@ -81,6 +83,9 @@ void setup() {
   }
   Serial.println();
   time_last_drip = millis();
+  time_next_drip = random(DRIP_PERIOD_MIN, DRIP_PERIOD_MAX);
+  Serial.print("Next drop(s) in: "); Serial.print(time_next_drip); Serial.println(" ms");
+  Serial.println();
 }
 
 void loop() {
