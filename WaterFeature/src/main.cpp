@@ -32,8 +32,8 @@
   #define DRIP_PERIOD_MAX                 5000
   //#define DRIP_PERIOD_MIN               300000               // [millis] or  5 min
   //#define DRIP_PERIOD_MAX              1800000               // [millis] or 30 min
-  #define DRIP_DELAY_MIN                   750               // [millis]
-  #define DRIP_DELAY_MAX                  1000               // [millis] or 10 sec
+  #define DRIP_DELAY_MIN                   250               // [millis]
+  #define DRIP_DELAY_MAX                  3000               // [millis] or 10 sec
 
 int steps_per_drip() {
   // This will be used to CALCULATE the number of steps per drip based on known constants
@@ -99,7 +99,9 @@ void loop() {
         do_drip();
         drip_qty = drip_qty - 1;
         if (drip_qty > 0) {
-          delay(random(DRIP_DELAY_MIN, DRIP_DELAY_MAX)); // randomize the drip rate/
+          int drip_delay = random(DRIP_DELAY_MIN, DRIP_DELAY_MAX);
+          Serial.print(drip_delay); Serial.print(" ");
+          delay(drip_delay); // randomize the drip rate/
         }
     }
     Serial.println();
