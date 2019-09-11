@@ -7,7 +7,7 @@
   #define MICROSTEPS                          8  // DRV8825 will do up to 32 microsteps
   #define DIR                                 8
   #define STEP                                9
-  #define SLEEP                              13 // optional (just delete SLEEP from everywhere if not used)
+  #define SLEEP                               5 // optional (just delete SLEEP from everywhere if not used)
   //#define MOTOR_ACCEL                      2000
   //#define MOTOR_DECEL                      1000
   #define STEPS_ROT    MICROSTEPS * MOTOR_STEPS
@@ -53,7 +53,9 @@ int steps_per_drip() {
 void setup() {
   stepper.begin(RPM,MICROSTEPS);
   stepper.enable();
-  //stepper.setSpeedProfile(stepper.LINEAR_SPEED, MOTOR_ACCEL, MOTOR_DECEL);
+  
+  pinMode(SLEEP,OUTPUT);
+  digitalWrite(SLEEP,LOW);
 
   Serial.begin(9600);
 
@@ -62,12 +64,15 @@ void setup() {
 
   // Lets do a drip or 5 to start:
   Serial.print("Pushing "); Serial.print(drip_qty); Serial.println(" drops");
+  digitalWrite(SLEEP, HIGH);
   while ( drip_qty > 0) {
     stepper.move(drip_steps);
     Serial.print("drip ");
     drip_qty--;
     if ( drip_qty > 0 ) {
       delay(500);
+    } else {
+      digitalWrite(SLEEP,LOW); //turn off the motor
     }
   }
   Serial.println();
@@ -79,12 +84,15 @@ void loop() {
   bool check_time = millis() - time_last_drip >= time_next_drip;
   if ( check_time ) {
     drip_qty = random(DRIP_QTY_MIN, DRIP_QTY_MAX);
+    digitalWrite(SLEEP,HIGH);
     while (drip_qty > 0) {
         Serial.print("drip ");
         stepper.move(drip_steps);
         drip_qty = drip_qty - 1;
         if (drip_qty > 0) {
           delay(random(DRIP_DELAY_MIN, DRIP_DELAY_MAX)); // randomize the drip rate/
+        } else {
+          digitalWrite(SLEEP,LOW); //turn off the motor
         }
     }
     Serial.println();
