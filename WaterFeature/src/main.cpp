@@ -3,9 +3,8 @@
 
 // Variables needed by StepperDriver
   // Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
-  #define MOTOR_STEPS 200
-  // Microstepping mode. If you hardwired it to save pins, set to the same value here.
-  #define MICROSTEPS                          8
+  #define MOTOR_STEPS                       200
+  #define MICROSTEPS                          8  // DRV8825 will do up to 32 microsteps
   #define DIR                                 8
   #define STEP                                9
   #define SLEEP                              13 // optional (just delete SLEEP from everywhere if not used)
@@ -26,24 +25,30 @@
   int drip_qty                 =             5;              // [drips]
   unsigned long time_next_drip =             0;              // number of millis until next drip
   unsigned long time_last_drip;
+  int drip_steps               =             0;
   #define DRIP_QTY_MIN                       1               // [drips]
   #define DRIP_QTY_MAX                       5               // [drips]
-  #define DRIP_PERIOD_MIN               300000               // [millis] or  5 min
-  #define DRIP_PERIOD_MAX              1800000               // [millis] or 30 min
-  #define DRIP_DELAY_MIN                   250               // [millis]
-  #define DRIP_DELAY_MAX                 10000               // [millis] or 10 sec
-  #define STEPS_PER_DRIP                   232               // This is a guess for now
-        // steps_turn = (4 * steps_rot*{microsteps} * Vd) / (pi^2 * ID_tube^2 * OD_pump)
-        // Where:
-        //  ID_tube   =  2 [mm]
-        //  OD_pump   = 35 [mm]
-        //  Vd (drop) = 50 [mm^3]
-        //
-        // Gives:
-        //  steps_turn = 232 (rounded up)
-        //  angle_turn ~  52 [degrees]
+  #define DRIP_PERIOD_MIN                 1000
+  #define DRIP_PERIOD_MAX                 5000
+  //#define DRIP_PERIOD_MIN               300000               // [millis] or  5 min
+  //#define DRIP_PERIOD_MAX              1800000               // [millis] or 30 min
+  #define DRIP_DELAY_MIN                   750               // [millis]
+  #define DRIP_DELAY_MAX                  1000               // [millis] or 10 sec
 
+int steps_per_drip() {
+  // This will be used to CALCULATE the number of steps per drip based on known constants
 
+  double vd        =     50.0;
+  double id_tube   =      2.0;
+  double od_pump   =     35.0;
+  
+  //int turn_angle = (1440 * Vd)/(9.86960440109 * id_tube^2 * od_pump);
+
+  int steps_per_drip = 0;
+  steps_per_drip = (STEPS_ROT * 4 * vd) / ( 9.86960440109 * pow(id_tube,2) * od_pump);
+  
+  return steps_per_drip;
+}
 
 void setup() {
   stepper.begin(RPM,MICROSTEPS);
@@ -52,9 +57,20 @@ void setup() {
 
   Serial.begin(9600);
 
+  // calculate the number of steps per drip (used throughout)
+  drip_steps = steps_per_drip();
+
   // Lets do a drip or 5 to start:
   Serial.print("Pushing "); Serial.print(drip_qty); Serial.println(" drops");
-  stepper.move(STEPS_PER_DRIP * drip_qty);
+  while ( drip_qty > 0) {
+    stepper.move(drip_steps);
+    Serial.print("drip ");
+    drip_qty--;
+    if ( drip_qty > 0 ) {
+      delay(500);
+    }
+  }
+  Serial.println();
   time_last_drip = millis();
 }
 
@@ -62,17 +78,20 @@ void loop() {
   // when there are no more steps, and the wait time has elapsed, do the drops
   bool check_time = millis() - time_last_drip >= time_next_drip;
   if ( check_time ) {
-    drip_qty = random(   DRIP_QTY_MIN,    DRIP_QTY_MAX);
+    drip_qty = random(DRIP_QTY_MIN, DRIP_QTY_MAX);
     while (drip_qty > 0) {
         Serial.print("drip ");
-        stepper.move(STEPS_PER_DRIP);
+        stepper.move(drip_steps);
         drip_qty = drip_qty - 1;
-        delay(random(DRIP_DELAY_MIN, DRIP_DELAY_MAX)); // randomize the drip rate/
+        if (drip_qty > 0) {
+          delay(random(DRIP_DELAY_MIN, DRIP_DELAY_MAX)); // randomize the drip rate/
+        }
     }
+    Serial.println();
     time_last_drip = millis();
     stepper.disable();
     time_next_drip = random(DRIP_PERIOD_MIN, DRIP_PERIOD_MAX);
-    Serial.print("Next drop in: "); Serial.print(time_next_drip); Serial.println(" ms");
+    Serial.print("Next drop(s) in: "); Serial.print(time_next_drip); Serial.println(" ms");
     Serial.println();
   }
 }
