@@ -50,6 +50,12 @@ int steps_per_drip() {
   return steps_per_drip;
 }
 
+void do_drip() {
+  digitalWrite(SLEEP,HIGH); // turn on motor
+  stepper.move(drip_steps); // move motor by 1 drip
+  digitalWrite(SLEEP,LOW);  // turn off motor
+}
+
 void setup() {
   stepper.begin(RPM,MICROSTEPS);
   stepper.enable();
@@ -66,13 +72,11 @@ void setup() {
   Serial.print("Pushing "); Serial.print(drip_qty); Serial.println(" drops");
   digitalWrite(SLEEP, HIGH);
   while ( drip_qty > 0) {
-    stepper.move(drip_steps);
+    do_drip();
     Serial.print("drip ");
     drip_qty--;
     if ( drip_qty > 0 ) {
       delay(500);
-    } else {
-      digitalWrite(SLEEP,LOW); //turn off the motor
     }
   }
   Serial.println();
@@ -87,12 +91,10 @@ void loop() {
     digitalWrite(SLEEP,HIGH);
     while (drip_qty > 0) {
         Serial.print("drip ");
-        stepper.move(drip_steps);
+        do_drip();
         drip_qty = drip_qty - 1;
         if (drip_qty > 0) {
           delay(random(DRIP_DELAY_MIN, DRIP_DELAY_MAX)); // randomize the drip rate/
-        } else {
-          digitalWrite(SLEEP,LOW); //turn off the motor
         }
     }
     Serial.println();
